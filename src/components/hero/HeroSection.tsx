@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import {
   heroTrustSignals,
+  airports,
   quoteAirports,
   quoteServices,
 } from '@/mocks/homepage';
 
 export default function HeroSection() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     airport: '',
     service: '',
@@ -21,6 +24,8 @@ export default function HeroSection() {
   const [showAirportDropdown, setShowAirportDropdown] = useState(false);
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -69,43 +74,66 @@ export default function HeroSection() {
               ))}
             </ul>
 
+            <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-orbit-border bg-white/65 p-2 shadow-sm backdrop-blur sm:grid-cols-5">
+              {airports.map((airport) => (
+                <div key={airport.code} className="rounded-lg bg-white px-3 py-2">
+                  <p className="text-xs font-bold text-orbit-text">{airport.code}</p>
+                  <p className="text-[11px] text-orbit-text-muted">
+                    From GBP {airport.priceFrom}/day
+                  </p>
+                </div>
+              ))}
+            </div>
+
             {/* Quote Form - Glass Card */}
             <div className="glass-card rounded-xl p-5 md:p-6 shadow-sm">
               <h2 className="text-sm font-semibold text-orbit-text mb-4">Get Your Instant Price</h2>
               <form
                 id="hero-quote-form"
                 data-readdy-form
-                action="https://readdy.ai/api/form/d7su5oscmq04e0g4eq6g"
-                method="POST"
+                noValidate
                 className="flex flex-col gap-3"
-                onSubmit={async (e) => {
+                onSubmit={(e) => {
                   e.preventDefault();
-                  const form = e.currentTarget;
-                  const formData = new FormData(form);
-                  const encodedData = new URLSearchParams();
 
-                  formData.forEach((value, key) => {
-                    encodedData.append(key, String(value));
+                  if (
+                    !formData.airport ||
+                    !formData.service ||
+                    !formData.arrivalDate ||
+                    !formData.arrivalTime ||
+                    !formData.returnDate ||
+                    !formData.returnTime
+                  ) {
+                    setFormError('Please complete every field to get your quote.');
+                    return;
+                  }
+
+                  const arrival = new Date(`${formData.arrivalDate}T${formData.arrivalTime}`);
+                  const returnAt = new Date(`${formData.returnDate}T${formData.returnTime}`);
+
+                  if (Number.isNaN(arrival.getTime()) || Number.isNaN(returnAt.getTime())) {
+                    setFormError('Please enter valid drop-off and return details.');
+                    return;
+                  }
+
+                  if (returnAt <= arrival) {
+                    setFormError('Return date and time must be after drop-off.');
+                    return;
+                  }
+
+                  setFormError('');
+                  setIsSubmitting(true);
+
+                  const params = new URLSearchParams({
+                    airport: formData.airport,
+                    service: formData.service,
+                    arrivalDate: formData.arrivalDate,
+                    arrivalTime: formData.arrivalTime,
+                    returnDate: formData.returnDate,
+                    returnTime: formData.returnTime,
                   });
 
-                  try {
-                    await fetch(form.action, {
-                      method: 'POST',
-                      body: encodedData,
-                      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    });
-                    const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-                    if (btn) {
-                      btn.textContent = 'Quote Sent!';
-                      btn.disabled = true;
-                      setTimeout(() => {
-                        btn.innerHTML = '<i class="ri-search-line w-4 h-4 flex items-center justify-center"></i> Get My Instant Price';
-                        btn.disabled = false;
-                      }, 3000);
-                    }
-                  } catch {
-                    // silently fail
-                  }
+                  router.push(`/quote?${params.toString()}`);
                 }}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -117,6 +145,7 @@ export default function HeroSection() {
                         setShowAirportDropdown(!showAirportDropdown);
                         setShowServiceDropdown(false);
                       }}
+                      aria-invalid={formError && !formData.airport ? true : undefined}
                       className="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text-muted hover:text-orbit-text transition-colors"
                     >
                       <span className={formData.airport ? 'text-orbit-text' : ''}>
@@ -124,7 +153,7 @@ export default function HeroSection() {
                       </span>
                       <i className="ri-arrow-down-s-line w-4 h-4 flex items-center justify-center" />
                     </button>
-                    <input type="hidden" name="airport" value={formData.airport} />
+                    <input required type="hidden" name="airport" value={formData.airport} />
                     {showAirportDropdown && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-orbit-border rounded-md z-30 max-h-48 overflow-y-auto shadow-lg">
                         {quoteAirports.map((airport) => (
@@ -152,6 +181,7 @@ export default function HeroSection() {
                         setShowServiceDropdown(!showServiceDropdown);
                         setShowAirportDropdown(false);
                       }}
+                      aria-invalid={formError && !formData.service ? true : undefined}
                       className="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text-muted hover:text-orbit-text transition-colors"
                     >
                       <span className={formData.service ? 'text-orbit-text' : ''}>
@@ -159,7 +189,7 @@ export default function HeroSection() {
                       </span>
                       <i className="ri-arrow-down-s-line w-4 h-4 flex items-center justify-center" />
                     </button>
-                    <input type="hidden" name="service_type" value={formData.service} />
+                    <input required type="hidden" name="service_type" value={formData.service} />
                     {showServiceDropdown && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-orbit-border rounded-md z-30 shadow-lg">
                         {quoteServices.map((service) => (
@@ -186,6 +216,7 @@ export default function HeroSection() {
                       name="arrival_date"
                       value={formData.arrivalDate}
                       onChange={(e) => setFormData({ ...formData, arrivalDate: e.target.value })}
+                      required
                       className="flex-1 px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text focus:outline-none focus:border-orbit-primary/50"
                     />
                     <input
@@ -193,6 +224,7 @@ export default function HeroSection() {
                       name="arrival_time"
                       value={formData.arrivalTime}
                       onChange={(e) => setFormData({ ...formData, arrivalTime: e.target.value })}
+                      required
                       className="w-24 px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text focus:outline-none focus:border-orbit-primary/50"
                     />
                   </div>
@@ -204,6 +236,7 @@ export default function HeroSection() {
                       name="return_date"
                       value={formData.returnDate}
                       onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
+                      required
                       className="flex-1 px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text focus:outline-none focus:border-orbit-primary/50"
                     />
                     <input
@@ -211,18 +244,28 @@ export default function HeroSection() {
                       name="return_time"
                       value={formData.returnTime}
                       onChange={(e) => setFormData({ ...formData, returnTime: e.target.value })}
+                      required
                       className="w-24 px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text focus:outline-none focus:border-orbit-primary/50"
                     />
                   </div>
                 </div>
 
+                {formError && (
+                  <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                    {formError}
+                  </p>
+                )}
+
                 {/* Submit */}
                 <button
                   type="submit"
-                  className="w-full mt-1 px-5 py-3 bg-orbit-accent text-white text-sm font-semibold rounded-md hover:bg-orange-600 transition-colors duration-300 flex items-center justify-center gap-2"
+                  disabled={isSubmitting}
+                  className="w-full mt-1 px-5 py-3 bg-orbit-accent text-white text-sm font-semibold rounded-md hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-70 transition-colors duration-300 flex items-center justify-center gap-2"
                 >
-                  <i className="ri-search-line w-4 h-4 flex items-center justify-center" />
-                  Get My Instant Price
+                  <i
+                    className={`${isSubmitting ? 'ri-loader-4-line animate-spin' : 'ri-search-line'} w-4 h-4 flex items-center justify-center`}
+                  />
+                  {isSubmitting ? 'Checking Prices...' : 'Get My Instant Price'}
                 </button>
               </form>
             </div>
@@ -235,6 +278,8 @@ export default function HeroSection() {
                 src="/homepage/hero-clouds.jpg"
                 alt="Aerial view of clouds and blue sky from airplane window"
                 fill
+                priority
+                loading="eager"
                 sizes="(min-width: 1024px) 50vw, 100vw"
                 className="w-full h-full object-cover"
               />

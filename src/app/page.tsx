@@ -6,6 +6,7 @@ import CTASection from '@/components/home/CTASection';
 import AirportsSection from '@/components/home/AirportsSection';
 import FAQSection from '@/components/home/FAQSection';
 import Footer from '@/components/home/Footer';
+import MobileStickyCTA from '@/components/MobileStickyCTA';
 import ReviewsSection from '@/components/home/ReviewsSection';
 import ServicesSection from '@/components/home/ServicesSection';
 import WhyChooseSection from '@/components/home/WhyChooseSection';
@@ -39,7 +40,7 @@ const jsonLd = [
     description:
       'Orbitpark helps UK travellers compare and book secure airport parking at Heathrow, Gatwick, Manchester, Stansted and Luton.',
     areaServed: 'United Kingdom',
-    telephone: '+44 203 123 4567',
+    telephone: '0203 XXX XXXX',
     aggregateRating: {
       '@type': 'AggregateRating',
       ratingValue: '4.9',
@@ -82,6 +83,7 @@ export default function Home() {
         <FAQSection />
         <CTASection />
       </main>
+      <MobileStickyCTA />
       <Footer />
     </>
   );

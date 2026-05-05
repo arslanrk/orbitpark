@@ -3,7 +3,7 @@ import SectionHeader from './SectionHeader';
 
 export default function WhyChooseSection() {
   return (
-    <section className="bg-white py-24 md:py-32">
+    <section id="why-orbitpark" className="bg-white py-24 md:py-32">
       <div className="mx-auto max-w-orbit px-4 md:px-6">
         <SectionHeader
           eyebrow="Why Orbitpark"

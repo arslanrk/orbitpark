@@ -331,27 +331,27 @@ export const faqs = [
 
 export const navLinks = [
   { label: 'Home', href: '/' },
-  { label: 'Airports', href: '/airports' },
-  { label: 'Services', href: '/services' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'Airports', href: '#airports' },
+  { label: 'Services', href: '#services' },
+  { label: 'About', href: '#why-orbitpark' },
+  { label: 'Contact', href: '#footer' },
 ];
 
 export const footerAirports = [
-  'Heathrow Parking',
-  'Gatwick Parking',
-  'Manchester Parking',
-  'Stansted Parking',
-  'Luton Parking',
-  'Birmingham Parking',
+  { label: 'Heathrow Parking', href: '/heathrow-airport-parking' },
+  { label: 'Gatwick Parking', href: '/gatwick-airport-parking' },
+  { label: 'Manchester Parking', href: '/manchester-airport-parking' },
+  { label: 'Stansted Parking', href: '/stansted-airport-parking' },
+  { label: 'Luton Parking', href: '/luton-airport-parking' },
+  { label: 'Birmingham Parking', href: '/birmingham-airport-parking' },
 ];
 
 export const footerServices = [
-  'Meet & Greet',
-  'Long Stay Parking',
-  'Park & Ride',
-  'Short Stay Parking',
-  'Terminal Parking',
+  { label: 'Meet & Greet', href: '/meet-and-greet-parking' },
+  { label: 'Long Stay Parking', href: '/long-stay-parking' },
+  { label: 'Park & Ride', href: '/park-and-ride' },
+  { label: 'Short Stay Parking', href: '/short-stay-parking' },
+  { label: 'Terminal Parking', href: '/terminal-parking' },
 ];
 
 export const footerCompany = [
