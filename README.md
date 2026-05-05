@@ -198,7 +198,3 @@ vercel --prod
 ## 📄 License
 
 Private — All rights reserved © 2026 Orbitpark Ltd
-
----
-
-Built with ❤️ in Lahore 🇵🇰 · Serving the UK 🇬🇧
