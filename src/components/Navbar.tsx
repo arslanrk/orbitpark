@@ -10,6 +10,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [airportMenuOpen, setAirportMenuOpen] = useState(false);
   const [mobileAirportsOpen, setMobileAirportsOpen] = useState(false);
+  const navTextClass = 'text-orbit-text-muted hover:text-orbit-text';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,7 +38,7 @@ export default function Navbar() {
             height={40}
             className="w-8 h-8 md:w-10 md:h-10 object-contain"
           />
-          <span className="text-lg md:text-xl font-bold text-orbit-text tracking-tight">
+          <span className="text-lg md:text-xl font-bold tracking-tight text-orbit-text">
             Orbitpark
           </span>
         </Link>
@@ -55,7 +56,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setAirportMenuOpen((open) => !open)}
-                  className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-orbit-text-muted hover:text-orbit-text transition-colors duration-300 whitespace-nowrap"
+                  className={`flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors duration-300 whitespace-nowrap ${navTextClass}`}
                   aria-expanded={airportMenuOpen}
                   aria-haspopup="menu"
                 >
@@ -100,7 +101,7 @@ export default function Navbar() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="px-4 py-2 text-sm font-medium text-orbit-text-muted hover:text-orbit-text transition-colors duration-300 whitespace-nowrap"
+                className={`px-4 py-2 text-sm font-medium transition-colors duration-300 whitespace-nowrap ${navTextClass}`}
               >
                 {link.label}
               </Link>
@@ -112,7 +113,7 @@ export default function Navbar() {
         <div className="hidden lg:flex items-center gap-4">
           <a
             href="tel:0203XXXXXXX"
-            className="flex items-center gap-2 text-sm text-orbit-text-muted hover:text-orbit-text transition-colors whitespace-nowrap"
+            className={`flex items-center gap-2 text-sm transition-colors whitespace-nowrap ${navTextClass}`}
           >
             <i className="ri-phone-line w-4 h-4 flex items-center justify-center" />
             0203 XXX XXXX

@@ -1,19 +1,29 @@
 "use client";
 
-import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
-  heroTrustSignals,
   airports,
+  heroTrustSignals,
   quoteAirports,
   quoteServices,
 } from '@/mocks/homepage';
 
+type HeroQuoteState = {
+  airport: string;
+  service: string;
+  arrivalDate: string;
+  arrivalTime: string;
+  returnDate: string;
+  returnTime: string;
+};
+
 export default function HeroSection() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<HeroQuoteState>({
     airport: '',
     service: '',
     arrivalDate: '',
@@ -21,8 +31,6 @@ export default function HeroSection() {
     returnDate: '',
     returnTime: '',
   });
-  const [showAirportDropdown, setShowAirportDropdown] = useState(false);
-  const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,297 +43,290 @@ export default function HeroSection() {
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  const updateField = (field: keyof HeroQuoteState, value: string) => {
+    setFormData((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (
+      !formData.airport ||
+      !formData.service ||
+      !formData.arrivalDate ||
+      !formData.arrivalTime ||
+      !formData.returnDate ||
+      !formData.returnTime
+    ) {
+      setFormError('Please complete every field to get your quote.');
+      return;
+    }
+
+    const arrival = new Date(`${formData.arrivalDate}T${formData.arrivalTime}`);
+    const returnAt = new Date(`${formData.returnDate}T${formData.returnTime}`);
+
+    if (Number.isNaN(arrival.getTime()) || Number.isNaN(returnAt.getTime())) {
+      setFormError('Please enter valid drop-off and return details.');
+      return;
+    }
+
+    if (returnAt <= arrival) {
+      setFormError('Return date and time must be after drop-off.');
+      return;
+    }
+
+    setFormError('');
+    setIsSubmitting(true);
+
+    const params = new URLSearchParams({
+      airport: formData.airport,
+      service: formData.service,
+      arrivalDate: formData.arrivalDate,
+      arrivalTime: formData.arrivalTime,
+      returnDate: formData.returnDate,
+      returnTime: formData.returnTime,
+    });
+
+    router.push(`/quote?${params.toString()}`);
+  };
+
   return (
-    <section id="quote" className="relative min-h-screen flex items-center overflow-hidden pt-20 md:pt-0">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-orbit-bg via-[#F0F9FF] to-[#E0F2FE]" />
+    <section
+      id="quote"
+      className="relative isolate flex min-h-screen items-center overflow-hidden bg-orbit-bg pt-24 md:pt-28"
+    >
+      <Image
+        src="/homepage/hero-clouds.jpg"
+        alt="Aerial view of clouds and blue sky from an airplane window"
+        fill
+        priority
+        loading="eager"
+        sizes="100vw"
+        className="absolute inset-0 -z-20 object-cover"
+      />
+      <div className="absolute inset-0 -z-10 bg-white/82" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white via-white/88 to-sky-50/70" />
+      <div className="absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-t from-orbit-bg to-transparent" />
 
-      {/* Soft blue ambient glow */}
-      <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-sky-300/20 rounded-full blur-[120px]" />
-      <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-sky-200/15 rounded-full blur-[100px]" />
-
-      <div className="relative z-10 max-w-orbit mx-auto px-4 md:px-6 w-full py-12 md:py-20">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-          {/* Left Content */}
-          <div className={`flex-1 w-full transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-50 border border-sky-200 text-orbit-primary text-xs font-medium mb-6">
-              <i className="ri-shield-check-line w-3.5 h-3.5 flex items-center justify-center" />
-              Trusted by 10,000+ UK travellers
-            </div>
-
-            {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-orbit-text leading-[1.1] tracking-tight mb-6">
-              Airport Parking UK<br />
-              <span className="text-orbit-primary-glow">Done Right.</span>
-            </h1>
-
-            {/* Description */}
-            <p className="text-base md:text-lg text-orbit-text-muted max-w-lg mb-8 leading-relaxed">
-              Compare and book secure parking at every major UK airport. Whether you need Meet & Greet convenience at Heathrow, affordable Long Stay parking at Gatwick, or Park & Ride at Manchester, Orbitpark gets you the lowest price, guaranteed.
-            </p>
-
-            <ul className="mb-8 grid gap-2 text-sm text-orbit-text-muted sm:grid-cols-2">
-              {heroTrustSignals.map((signal) => (
-                <li key={signal} className="flex items-center gap-2">
-                  <i className="ri-check-line text-orbit-success" />
-                  {signal}
-                </li>
-              ))}
-            </ul>
-
-            <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-orbit-border bg-white/65 p-2 shadow-sm backdrop-blur sm:grid-cols-5">
-              {airports.map((airport) => (
-                <div key={airport.code} className="rounded-lg bg-white px-3 py-2">
-                  <p className="text-xs font-bold text-orbit-text">{airport.code}</p>
-                  <p className="text-[11px] text-orbit-text-muted">
-                    From GBP {airport.priceFrom}/day
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Quote Form - Glass Card */}
-            <div className="glass-card rounded-xl p-5 md:p-6 shadow-sm">
-              <h2 className="text-sm font-semibold text-orbit-text mb-4">Get Your Instant Price</h2>
-              <form
-                id="hero-quote-form"
-                data-readdy-form
-                noValidate
-                className="flex flex-col gap-3"
-                onSubmit={(e) => {
-                  e.preventDefault();
-
-                  if (
-                    !formData.airport ||
-                    !formData.service ||
-                    !formData.arrivalDate ||
-                    !formData.arrivalTime ||
-                    !formData.returnDate ||
-                    !formData.returnTime
-                  ) {
-                    setFormError('Please complete every field to get your quote.');
-                    return;
-                  }
-
-                  const arrival = new Date(`${formData.arrivalDate}T${formData.arrivalTime}`);
-                  const returnAt = new Date(`${formData.returnDate}T${formData.returnTime}`);
-
-                  if (Number.isNaN(arrival.getTime()) || Number.isNaN(returnAt.getTime())) {
-                    setFormError('Please enter valid drop-off and return details.');
-                    return;
-                  }
-
-                  if (returnAt <= arrival) {
-                    setFormError('Return date and time must be after drop-off.');
-                    return;
-                  }
-
-                  setFormError('');
-                  setIsSubmitting(true);
-
-                  const params = new URLSearchParams({
-                    airport: formData.airport,
-                    service: formData.service,
-                    arrivalDate: formData.arrivalDate,
-                    arrivalTime: formData.arrivalTime,
-                    returnDate: formData.returnDate,
-                    returnTime: formData.returnTime,
-                  });
-
-                  router.push(`/quote?${params.toString()}`);
-                }}
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Airport Dropdown */}
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowAirportDropdown(!showAirportDropdown);
-                        setShowServiceDropdown(false);
-                      }}
-                      aria-invalid={formError && !formData.airport ? true : undefined}
-                      className="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text-muted hover:text-orbit-text transition-colors"
-                    >
-                      <span className={formData.airport ? 'text-orbit-text' : ''}>
-                        {formData.airport || 'Select Airport'}
-                      </span>
-                      <i className="ri-arrow-down-s-line w-4 h-4 flex items-center justify-center" />
-                    </button>
-                    <input required type="hidden" name="airport" value={formData.airport} />
-                    {showAirportDropdown && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-orbit-border rounded-md z-30 max-h-48 overflow-y-auto shadow-lg">
-                        {quoteAirports.map((airport) => (
-                          <button
-                            key={airport}
-                            type="button"
-                            onClick={() => {
-                              setFormData({ ...formData, airport });
-                              setShowAirportDropdown(false);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm text-orbit-text-muted hover:text-orbit-text hover:bg-sky-50 transition-colors"
-                          >
-                            {airport}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Service Dropdown */}
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowServiceDropdown(!showServiceDropdown);
-                        setShowAirportDropdown(false);
-                      }}
-                      aria-invalid={formError && !formData.service ? true : undefined}
-                      className="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text-muted hover:text-orbit-text transition-colors"
-                    >
-                      <span className={formData.service ? 'text-orbit-text' : ''}>
-                        {formData.service || 'Select Service'}
-                      </span>
-                      <i className="ri-arrow-down-s-line w-4 h-4 flex items-center justify-center" />
-                    </button>
-                    <input required type="hidden" name="service_type" value={formData.service} />
-                    {showServiceDropdown && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-orbit-border rounded-md z-30 shadow-lg">
-                        {quoteServices.map((service) => (
-                          <button
-                            key={service}
-                            type="button"
-                            onClick={() => {
-                              setFormData({ ...formData, service });
-                              setShowServiceDropdown(false);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm text-orbit-text-muted hover:text-orbit-text hover:bg-sky-50 transition-colors"
-                          >
-                            {service}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Arrival Date + Time */}
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      name="arrival_date"
-                      value={formData.arrivalDate}
-                      onChange={(e) => setFormData({ ...formData, arrivalDate: e.target.value })}
-                      required
-                      className="flex-1 px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text focus:outline-none focus:border-orbit-primary/50"
-                    />
-                    <input
-                      type="time"
-                      name="arrival_time"
-                      value={formData.arrivalTime}
-                      onChange={(e) => setFormData({ ...formData, arrivalTime: e.target.value })}
-                      required
-                      className="w-24 px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text focus:outline-none focus:border-orbit-primary/50"
-                    />
-                  </div>
-
-                  {/* Return Date + Time */}
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      name="return_date"
-                      value={formData.returnDate}
-                      onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
-                      required
-                      className="flex-1 px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text focus:outline-none focus:border-orbit-primary/50"
-                    />
-                    <input
-                      type="time"
-                      name="return_time"
-                      value={formData.returnTime}
-                      onChange={(e) => setFormData({ ...formData, returnTime: e.target.value })}
-                      required
-                      className="w-24 px-3 py-2.5 bg-white/70 border border-orbit-border rounded-md text-sm text-orbit-text focus:outline-none focus:border-orbit-primary/50"
-                    />
-                  </div>
-                </div>
-
-                {formError && (
-                  <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
-                    {formError}
-                  </p>
-                )}
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full mt-1 px-5 py-3 bg-orbit-accent text-white text-sm font-semibold rounded-md hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-70 transition-colors duration-300 flex items-center justify-center gap-2"
-                >
-                  <i
-                    className={`${isSubmitting ? 'ri-loader-4-line animate-spin' : 'ri-search-line'} w-4 h-4 flex items-center justify-center`}
-                  />
-                  {isSubmitting ? 'Checking Prices...' : 'Get My Instant Price'}
-                </button>
-              </form>
-            </div>
+      <div className="mx-auto grid w-full max-w-orbit gap-8 px-4 pb-14 md:px-6 md:pb-20 lg:grid-cols-[1fr_440px] lg:items-center">
+        <div
+          className={`transition-all duration-1000 ${
+            isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+          }`}
+        >
+          <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3 py-1.5 text-xs font-bold text-orbit-primary shadow-sm backdrop-blur">
+            <i className="ri-shield-check-line" />
+            Trusted by 10,000+ UK travellers
           </div>
 
-          {/* Right Image + Floating Cards */}
-          <div className={`hidden lg:block flex-1 relative transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-xl">
-              <Image
-                src="/homepage/hero-clouds.jpg"
-                alt="Aerial view of clouds and blue sky from airplane window"
-                fill
-                priority
-                loading="eager"
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                className="w-full h-full object-cover"
-              />
-              {/* Subtle light overlay for card readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-white/10" />
+          <h1 className="mt-6 max-w-4xl text-4xl font-bold leading-[1.05] tracking-normal text-orbit-text sm:text-5xl md:text-6xl lg:text-7xl">
+            Airport Parking UK.
+            <span className="block text-orbit-primary-glow">Done Right.</span>
+          </h1>
 
-              {/* Floating Card - Booking Confirmation */}
-              <div className="absolute top-6 right-6 glass-card-strong rounded-lg p-3 max-w-[200px] animate-pulse-slow">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                    <i className="ri-check-line text-green-600 text-xs w-3 h-3 flex items-center justify-center" />
-                  </div>
-                  <span className="text-xs font-semibold text-orbit-text">Booking Confirmed</span>
-                </div>
-                <p className="text-[10px] text-orbit-text-muted">Heathrow Meet & Greet - 14 days</p>
-              </div>
+          <p className="mt-6 max-w-2xl text-base leading-8 text-orbit-text-muted md:text-xl md:leading-9">
+            Compare and book secure parking at every major UK airport. Choose
+            Meet & Greet convenience, affordable Long Stay, or Park & Ride
+            value before you travel.
+          </p>
 
-              {/* Floating Card - Savings */}
-              <div className="absolute bottom-8 left-6 glass-card-strong rounded-lg p-3 max-w-[180px]">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-                    <i className="ri-percent-line text-orbit-accent text-sm w-4 h-4 flex items-center justify-center" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-orbit-text">Save up to 70%</p>
-                    <p className="text-[10px] text-orbit-text-muted">vs on-the-day parking</p>
-                  </div>
-                </div>
+          <ul className="mt-7 grid max-w-2xl gap-3 text-sm font-medium text-orbit-text-muted sm:grid-cols-2">
+            {heroTrustSignals.map((signal) => (
+              <li key={signal} className="flex items-start gap-2">
+                <i className="ri-check-line mt-1 text-orbit-success" />
+                <span>{signal}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-8 grid max-w-3xl grid-cols-2 gap-2 rounded-2xl border border-white/70 bg-white/70 p-2 shadow-sm backdrop-blur sm:grid-cols-5">
+            {airports.map((airport) => (
+              <div key={airport.code} className="rounded-xl bg-white px-3 py-3 shadow-sm">
+                <p className="text-xs font-bold text-orbit-text">{airport.code}</p>
+                <p className="mt-1 text-[11px] leading-4 text-orbit-text-muted">
+                  From GBP {airport.priceFrom}/day
+                </p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Scroll Indicator */}
-        <div className={`flex justify-center mt-12 md:mt-16 transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div
+          className={`transition-all duration-1000 delay-200 ${
+            isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+          }`}
+        >
+          <form
+            id="hero-quote-form"
+            noValidate
+            onSubmit={handleSubmit}
+            className="rounded-2xl border border-white/80 bg-white p-4 text-orbit-text shadow-2xl md:p-5"
+          >
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <p className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-normal text-orbit-primary">
+                  <i className="ri-search-line" />
+                  Instant quote
+                </p>
+                <h2 className="mt-3 text-2xl font-bold leading-tight text-orbit-text">
+                  Get your parking price
+                </h2>
+                <p className="mt-1 text-sm text-orbit-text-muted">
+                  Compare secure airport parking in under a minute.
+                </p>
+              </div>
+              <span className="rounded-xl bg-orange-50 px-3 py-2 text-right text-xs font-bold leading-tight text-orbit-accent">
+                Save up to
+                <span className="block text-lg">70%</span>
+              </span>
+            </div>
+
+            <div className="grid min-w-0 gap-3.5">
+              <SelectField
+                label="Airport"
+                value={formData.airport}
+                onChange={(value) => updateField('airport', value)}
+                options={quoteAirports}
+                placeholder="Select airport"
+              />
+              <SelectField
+                label="Service"
+                value={formData.service}
+                onChange={(value) => updateField('service', value)}
+                options={quoteServices}
+                placeholder="Select service"
+              />
+
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                <DateTimeFields
+                  label="Drop-off"
+                  dateValue={formData.arrivalDate}
+                  timeValue={formData.arrivalTime}
+                  onDateChange={(value) => updateField('arrivalDate', value)}
+                  onTimeChange={(value) => updateField('arrivalTime', value)}
+                />
+                <DateTimeFields
+                  label="Return"
+                  dateValue={formData.returnDate}
+                  timeValue={formData.returnTime}
+                  onDateChange={(value) => updateField('returnDate', value)}
+                  onTimeChange={(value) => updateField('returnTime', value)}
+                />
+              </div>
+            </div>
+
+            {formError && (
+              <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                {formError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-orbit-accent px-5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <i
+                className={`${isSubmitting ? 'ri-loader-4-line animate-spin' : 'ri-search-line'} flex h-4 w-4 items-center justify-center`}
+              />
+              {isSubmitting ? 'Checking Prices...' : 'Get My Instant Price'}
+            </button>
+
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] font-bold text-orbit-text-muted">
+              <span className="rounded-lg bg-orbit-bg px-2 py-2">No fees</span>
+              <span className="rounded-lg bg-orbit-bg px-2 py-2">Secure pay</span>
+              <span className="rounded-lg bg-orbit-bg px-2 py-2">Instant email</span>
+            </div>
+          </form>
+        </div>
+
+        <div
+          className={`flex justify-center transition-all delay-500 duration-1000 lg:col-span-2 ${
+            isVisible ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           <a
             href="#how-it-works"
-            className="flex flex-col items-center gap-2 text-orbit-text-dim hover:text-orbit-text-muted transition-colors"
+            className="flex flex-col items-center gap-2 text-orbit-text-dim transition-colors hover:text-orbit-text-muted"
           >
             <span className="text-xs font-medium">Scroll to explore</span>
-            <div className="w-5 h-8 rounded-full border border-orbit-text-dim/50 flex items-start justify-center p-1">
-              <div className="w-1 h-2 bg-orbit-text-dim rounded-full animate-bounce" />
+            <div className="flex h-8 w-5 items-start justify-center rounded-full border border-orbit-text-dim/50 p-1">
+              <div className="h-2 w-1 animate-bounce rounded-full bg-orbit-text-dim" />
             </div>
           </a>
         </div>
       </div>
     </section>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder: string;
+}) {
+  return (
+    <label className="grid min-w-0 gap-1.5 text-sm font-semibold text-orbit-text">
+      {label}
+      <select
+        required
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-12 w-full min-w-0 truncate rounded-lg border border-orbit-border bg-white px-3 text-sm text-orbit-text outline-none transition-colors focus:border-orbit-primary"
+      >
+        <option value="" disabled>
+          {placeholder}
+        </option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function DateTimeFields({
+  label,
+  dateValue,
+  timeValue,
+  onDateChange,
+  onTimeChange,
+}: {
+  label: string;
+  dateValue: string;
+  timeValue: string;
+  onDateChange: (value: string) => void;
+  onTimeChange: (value: string) => void;
+}) {
+  return (
+    <fieldset className="grid min-w-0 gap-1.5">
+      <legend className="text-sm font-semibold text-orbit-text">{label}</legend>
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_96px] gap-2 sm:grid-cols-[minmax(0,1fr)_108px]">
+        <input
+          required
+          type="date"
+          value={dateValue}
+          onChange={(event) => onDateChange(event.target.value)}
+          className="h-12 min-w-0 rounded-lg border border-orbit-border bg-white px-3 text-sm text-orbit-text outline-none transition-colors focus:border-orbit-primary"
+        />
+        <input
+          required
+          type="time"
+          value={timeValue}
+          onChange={(event) => onTimeChange(event.target.value)}
+          className="h-12 min-w-0 rounded-lg border border-orbit-border bg-white px-3 text-sm text-orbit-text outline-none transition-colors focus:border-orbit-primary"
+        />
+      </div>
+    </fieldset>
   );
 }

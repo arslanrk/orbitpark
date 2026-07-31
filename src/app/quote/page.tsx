@@ -3,6 +3,7 @@ import Link from 'next/link';
 type QuotePageProps = {
   searchParams: Promise<{
     airport?: string;
+    terminal?: string;
     service?: string;
     arrivalDate?: string;
     arrivalTime?: string;
@@ -15,6 +16,7 @@ export default async function QuotePage({ searchParams }: QuotePageProps) {
   const params = await searchParams;
   const quoteDetails = {
     airport: params.airport ?? '',
+    terminal: params.terminal ?? '',
     service: params.service ?? '',
     arrivalDate: params.arrivalDate ?? '',
     arrivalTime: params.arrivalTime ?? '',
@@ -46,6 +48,9 @@ export default async function QuotePage({ searchParams }: QuotePageProps) {
         {hasQuoteDetails ? (
           <dl className="mt-8 grid gap-3 rounded-xl bg-orbit-bg p-4 text-sm md:grid-cols-2">
             <QuoteDetail label="Airport" value={quoteDetails.airport} />
+            {quoteDetails.terminal && (
+              <QuoteDetail label="Terminal" value={quoteDetails.terminal} />
+            )}
             <QuoteDetail label="Service" value={quoteDetails.service} />
             <QuoteDetail
               label="Drop-off"
